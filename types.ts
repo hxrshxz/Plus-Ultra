@@ -58,6 +58,7 @@ export interface HabitTrackerContextType {
   habits: Habit[];
   dayLogs: DayLog[];
   weightLogs: WeightLog[];
+  dailyGoal: number;           // Daily goal in number of habits to complete
   isLoading: boolean;
   
   // Habit Management
@@ -83,4 +84,5 @@ export interface HabitTrackerContextType {
   getCompletionRate: (habitId: string, days: number) => number;
   getDayCompletionPercentage: (date: string) => number;
   getTotalCompletedToday: () => number;
+  updateDailyGoal: (goal: number) => void;
 }
