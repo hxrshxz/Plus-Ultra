@@ -16,6 +16,7 @@ import { getTodayIST, getDateDaysAgo } from '../utils/time';
 const STORAGE_KEY_LOGS = 'muscleUpDayLogs';
 const STORAGE_KEY_HABITS = 'muscleUpHabits';
 const STORAGE_KEY_WEIGHT = 'muscleUpWeightLogs';
+const STORAGE_KEY_DAILY_GOAL = 'muscleUpDailyGoal';
 
 // ============================================
 // DEFAULT CONTEXT
@@ -24,6 +25,7 @@ const defaultContextValue: HabitTrackerContextType = {
   habits: DEFAULT_HABITS,
   dayLogs: [],
   weightLogs: [],
+  dailyGoal: 5,
   isLoading: true,
   addHabit: () => {},
   updateHabit: () => {},
@@ -41,6 +43,7 @@ const defaultContextValue: HabitTrackerContextType = {
   getCompletionRate: () => 0,
   getDayCompletionPercentage: () => 0,
   getTotalCompletedToday: () => 0,
+  updateDailyGoal: () => {},
 };
 
 const HabitTrackerContext = createContext<HabitTrackerContextType>(defaultContextValue);
@@ -52,6 +55,7 @@ export const HabitTrackerProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
   const [dayLogs, setDayLogs] = useState<DayLog[]>([]);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
+  const [dailyGoal, setDailyGoal] = useState<number>(5);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load from localStorage on mount
@@ -83,6 +87,15 @@ export const HabitTrackerProvider: React.FC<{ children: ReactNode }> = ({ childr
           setWeightLogs(parsed);
         }
       }
+      
+      // Load daily goal
+      const savedGoal = localStorage.getItem(STORAGE_KEY_DAILY_GOAL);
+      if (savedGoal) {
+        const parsed = parseInt(savedGoal, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          setDailyGoal(parsed);
+        }
+      }
     } catch (error) {
       console.error('Failed to load from storage:', error);
     } finally {
@@ -104,6 +117,14 @@ export const HabitTrackerProvider: React.FC<{ children: ReactNode }> = ({ childr
       if (e.key === STORAGE_KEY_WEIGHT && e.newValue) {
         try {
           setWeightLogs(JSON.parse(e.newValue));
+        } catch {}
+      }
+      if (e.key === STORAGE_KEY_DAILY_GOAL && e.newValue) {
+        try {
+          const parsed = parseInt(e.newValue, 10);
+          if (!isNaN(parsed) && parsed > 0) {
+            setDailyGoal(parsed);
+          }
         } catch {}
       }
     };
@@ -143,6 +164,17 @@ export const HabitTrackerProvider: React.FC<{ children: ReactNode }> = ({ childr
       }
     }
   }, [weightLogs, isLoading]);
+
+  // Save daily goal to localStorage
+  useEffect(() => {
+    if (!isLoading) {
+      try {
+        localStorage.setItem(STORAGE_KEY_DAILY_GOAL, dailyGoal.toString());
+      } catch (error) {
+        console.error('Failed to save daily goal to storage:', error);
+      }
+    }
+  }, [dailyGoal, isLoading]);
 
   // ============================================
   // HABIT MANAGEMENT
@@ -301,17 +333,23 @@ export const HabitTrackerProvider: React.FC<{ children: ReactNode }> = ({ childr
   // ============================================
 
   // Calculate current streak for a habit
+  // Fixed: Properly handle consecutive days counting
   const getStreak = useCallback((habitId: string): number => {
     let streak = 0;
+    const today = getTodayIST();
+    const todayLog = getHabitLog(habitId, today);
     
-    for (let i = 0; i < 365; i++) {
+    // Check if today is completed - if so, start from today
+    // If not, start from yesterday (streak doesn't include incomplete today)
+    const startFrom = todayLog?.completed ? 0 : 1;
+    
+    for (let i = startFrom; i < 365; i++) {
       const date = getDateDaysAgo(i);
       const log = getHabitLog(habitId, date);
       
       if (log?.completed) {
         streak++;
-      } else if (i > 0) {
-        // Don't break on today if not completed yet
+      } else {
         break;
       }
     }
@@ -401,10 +439,18 @@ export const HabitTrackerProvider: React.FC<{ children: ReactNode }> = ({ childr
     return weightLogs[weightLogs.length - 1];
   }, [weightLogs]);
 
+  // Update daily goal
+  const updateDailyGoal = useCallback((goal: number) => {
+    if (goal > 0) {
+      setDailyGoal(goal);
+    }
+  }, []);
+
   const value: HabitTrackerContextType = {
     habits,
     dayLogs,
     weightLogs,
+    dailyGoal,
     isLoading,
     addHabit,
     updateHabit,
@@ -422,6 +468,7 @@ export const HabitTrackerProvider: React.FC<{ children: ReactNode }> = ({ childr
     getCompletionRate,
     getDayCompletionPercentage,
     getTotalCompletedToday,
+    updateDailyGoal,
   };
 
   return (
