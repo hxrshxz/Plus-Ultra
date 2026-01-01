@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plus-Ultra • Go beyond Ultra</title>
+    <meta name="description" content="Plus-Ultra - A god-level fitness habit tracker to build crazy muscle. Track supplements, gym, boxing, water, sleep, and more with Indian Standard Time (IST) support." />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Premium Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Bebas+Neue&family=Outfit:wght@100;200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --accent-amber: #f59e0b;
+        --accent-amber-glow: rgba(245, 158, 11, 0.3);
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-hover: rgba(255, 255, 255, 0.06);
+      }
+
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+      }
+
+      *::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+
+      body {
+        font-family: "Outfit", "Inter", sans-serif;
+        background: #0a0a0a;
+        overflow-x: hidden;
+      }
+
+      /* Unique Font Classes */
+      .font-timer {
+        font-family: "Orbitron", monospace;
+        letter-spacing: 0.05em;
+      }
+
+      .font-title {
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      .font-display {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+      }
+
+      .font-impact {
+        font-family: "Bebas Neue", sans-serif;
+        letter-spacing: 0.1em;
+      }
+
+      .font-mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* ===== ANIMATIONS ===== */
+
+      /* Gradient Flow Animation */
+      @keyframes gradientFlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .text-gradient-flow {
+        background: linear-gradient(90deg, #f59e0b, #fb923c, #fbbf24, #f59e0b);
+        background-size: 300% 100%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradientFlow 3s ease infinite;
+      }
+
+      /* Subtle Float Animation */
+      @keyframes subtleFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+      }
+
+      .text-float {
+        animation: subtleFloat 4s ease-in-out infinite;
+      }
+
+      /* Animated Background Gradient */
+      @keyframes gradientShift {
+        0%, 100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      .animated-bg {
+        background: linear-gradient(135deg, 
+          #0a0a0a 0%, 
+          #111111 25%, 
+          #0d1117 50%, 
+          #0f0f0f 75%, 
+          #0a0a0a 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+      }
+
+      /* Ambient Glow Effects */
+      .ambient-glow {
+        position: fixed;
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.07;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .ambient-glow-1 {
+        background: linear-gradient(135deg, #f59e0b, #fb923c);
+        top: -200px;
+        right: -200px;
+        animation: floatGlow1 20s ease-in-out infinite;
+      }
+
+      .ambient-glow-2 {
+        background: linear-gradient(135deg, #10b981, #34d399);
+        bottom: -200px;
+        left: -200px;
+        animation: floatGlow2 25s ease-in-out infinite;
+      }
+
+      @keyframes floatGlow1 {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(-50px, 50px) scale(1.1); }
+      }
+
+      @keyframes floatGlow2 {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(50px, -50px) scale(1.1); }
+      }
+
+      /* Premium Glass Effect */
+      .glass-card {
+        background: linear-gradient(135deg, var(--glass-bg), transparent);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .glass-card:hover {
+        background: linear-gradient(135deg, var(--glass-hover), transparent);
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      /* IST Badge Styling */
+      .ist-badge {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: #f59e0b;
+        font-size: 0.625rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+      }
+
+      /* Fade slide up animation */
+      @keyframes fadeSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Fade in animation */
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      /* Hide scrollbar utility */
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Neon text effect */
+      .text-neon {
+        text-shadow: 
+          0 0 5px #f59e0b,
+          0 0 10px #f59e0b,
+          0 0 20px #f59e0b;
+      }
+
+      /* Pulse animation */
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      /* Text gradient variations */
+      .text-gradient-amber {
+        background: linear-gradient(135deg, #f59e0b, #fb923c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .text-gradient-green {
+        background: linear-gradient(135deg, #10b981, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .text-gradient-purple {
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Hover glow effect */
+      .hover-glow {
+        transition: all 0.3s ease;
+      }
+
+      .hover-glow:hover {
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+      }
+
+      /* Success checkmark animation */
+      @keyframes checkmark {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+      }
+
+      .animate-checkmark {
+        animation: checkmark 0.3s ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
