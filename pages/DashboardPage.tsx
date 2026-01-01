@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useHabitTracker } from '../context/HabitTrackerContext';
 import { getISTDate, getDateDaysAgo, getTodayIST } from '../utils/time';
 import { FireIcon, BackArrowIcon } from '../components/icons';
@@ -17,6 +17,9 @@ import {
 } from 'recharts';
 import { CATEGORY_COLORS, CATEGORY_LABELS } from '../utils/habits';
 
+// Time period filter type
+type TimePeriod = 'today' | 'weekly' | 'monthly';
+
 // ============================================
 // STAT CARD COMPONENT
 // ============================================
@@ -27,8 +30,10 @@ const StatCard: React.FC<{
   icon: React.ReactNode;
   accentColor: string;
   glowColor: string;
-}> = ({ title, value, subtext, icon, accentColor, glowColor }) => (
-  <div className="group relative">
+  onClick?: () => void;
+  editable?: boolean;
+}> = ({ title, value, subtext, icon, accentColor, glowColor, onClick, editable }) => (
+  <div className="group relative" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
     <div
       className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-all duration-700"
       style={{ background: glowColor }}
@@ -47,9 +52,16 @@ const StatCard: React.FC<{
       >
         <div style={{ color: accentColor }}>{icon}</div>
       </div>
-      <p className="text-neutral-500 text-xs font-semibold uppercase tracking-[0.2em] mb-2 font-title">
-        {title}
-      </p>
+      <div className="flex items-center gap-2">
+        <p className="text-neutral-500 text-xs font-semibold uppercase tracking-[0.2em] mb-2 font-title">
+          {title}
+        </p>
+        {editable && (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-neutral-500 mb-2">
+            <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+          </svg>
+        )}
+      </div>
       <p className="text-4xl font-medium text-white font-timer tracking-tight">{value}</p>
       {subtext && <p className="text-neutral-600 text-sm mt-2">{subtext}</p>}
     </div>
@@ -88,6 +100,34 @@ const HabitStreakRow: React.FC<{
 );
 
 // ============================================
+// TOP PERFORMER ROW
+// ============================================
+const TopPerformerRow: React.FC<{
+  rank: number;
+  habit: { id: string; name: string; emoji: string; color: string };
+  completionRate: number;
+  maxRate: number;
+}> = ({ rank, habit, completionRate, maxRate }) => (
+  <div className="flex items-center gap-4 py-3 border-b border-white/5 last:border-0">
+    <span className="text-amber-500 font-mono text-sm">#{rank}</span>
+    <span className="text-xl">{habit.emoji}</span>
+    <div className="flex-1">
+      <p className="text-white text-sm mb-1">{habit.name}</p>
+      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div 
+          className="h-full rounded-full transition-all duration-500"
+          style={{ 
+            width: `${maxRate > 0 ? (completionRate / maxRate) * 100 : 0}%`,
+            background: `linear-gradient(90deg, ${habit.color}, ${habit.color}80)`
+          }}
+        />
+      </div>
+    </div>
+    <span className="text-amber-500 font-mono text-lg">{Math.round(completionRate)}%</span>
+  </div>
+);
+
+// ============================================
 // DASHBOARD PAGE
 // ============================================
 const DashboardPage: React.FC = () => {
@@ -100,9 +140,18 @@ const DashboardPage: React.FC = () => {
     getDayCompletionPercentage,
     getTotalCompletedToday,
     dayLogs,
+    dailyGoal,
+    updateDailyGoal,
   } = useHabitTracker();
 
   const today = getTodayIST();
+  
+  // State for time period filter
+  const [topPerformersPeriod, setTopPerformersPeriod] = useState<TimePeriod>('weekly');
+  
+  // State for editing daily goal
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [goalInput, setGoalInput] = useState(dailyGoal.toString());
 
   // Calculate dashboard stats
   const stats = useMemo(() => {
@@ -157,6 +206,16 @@ const DashboardPage: React.FC = () => {
       return completion > 0;
     }).length;
 
+    // Top performers by period
+    const periodDays = topPerformersPeriod === 'today' ? 1 : topPerformersPeriod === 'weekly' ? 7 : 30;
+    const topPerformers = habits
+      .map((h) => ({
+        habit: h,
+        rate: getCompletionRate(h.id, periodDays),
+      }))
+      .sort((a, b) => b.rate - a.rate)
+      .slice(0, 5);
+
     return {
       todayCompletion,
       weeklyCompletion,
@@ -167,6 +226,7 @@ const DashboardPage: React.FC = () => {
       allStreaks,
       activeDays,
       totalCompleted: getTotalCompletedToday(),
+      topPerformers,
     };
   }, [
     habits,
@@ -177,6 +237,7 @@ const DashboardPage: React.FC = () => {
     getTotalCompletedToday,
     dayLogs,
     today,
+    topPerformersPeriod,
   ]);
 
   return (
@@ -405,6 +466,138 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Top Performers Section */}
+        <div className="mt-8 glass-card rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-neutral-500 text-sm font-semibold uppercase tracking-[0.2em] mb-1">
+                Top Performers
+              </h2>
+              <p className="text-xl font-light text-white">
+                {topPerformersPeriod === 'today' ? 'Today' : topPerformersPeriod === 'weekly' ? 'This Week' : 'This Month'}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {(['today', 'weekly', 'monthly'] as TimePeriod[]).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setTopPerformersPeriod(period)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    topPerformersPeriod === period
+                      ? 'bg-amber-500 text-black'
+                      : 'bg-white/5 text-neutral-400 hover:bg-white/10'
+                  }`}
+                >
+                  {period === 'today' ? 'Today' : period === 'weekly' ? 'Week' : 'Month'}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="space-y-1">
+            {stats.topPerformers.length > 0 ? (
+              stats.topPerformers.map(({ habit, rate }, index) => (
+                <TopPerformerRow
+                  key={habit.id}
+                  rank={index + 1}
+                  habit={habit}
+                  completionRate={rate}
+                  maxRate={stats.topPerformers[0]?.rate || 100}
+                />
+              ))
+            ) : (
+              <p className="text-neutral-500 text-center py-4">No data for this period</p>
+            )}
+          </div>
+        </div>
+
+        {/* Daily Goal Section */}
+        <div className="mt-8 glass-card rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-neutral-500 text-sm font-semibold uppercase tracking-[0.2em] mb-1">
+                Daily Goal
+              </h2>
+              <p className="text-xl font-light text-white">Complete {dailyGoal} habits per day</p>
+            </div>
+            <button
+              onClick={() => {
+                setGoalInput(dailyGoal.toString());
+                setIsEditingGoal(true);
+              }}
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-neutral-400 hover:bg-white/10 transition-all duration-300 flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+              </svg>
+              Edit
+            </button>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-neutral-500 text-sm">Today's Progress</span>
+              <span className="text-amber-500 font-mono">{stats.totalCompleted}/{dailyGoal}</span>
+            </div>
+            <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all duration-500"
+                style={{ 
+                  width: `${Math.min((stats.totalCompleted / dailyGoal) * 100, 100)}%`,
+                  background: stats.totalCompleted >= dailyGoal 
+                    ? 'linear-gradient(90deg, #10b981, #34d399)' 
+                    : 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                }}
+              />
+            </div>
+            <p className="text-neutral-600 text-xs mt-2 text-center">
+              {stats.totalCompleted >= dailyGoal 
+                ? '🎉 Goal reached! Great job!' 
+                : `${dailyGoal - stats.totalCompleted} more to go`}
+            </p>
+          </div>
+        </div>
+
+        {/* Edit Goal Modal */}
+        {isEditingGoal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setIsEditingGoal(false)}>
+            <div className="glass-card rounded-3xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-white text-xl font-semibold mb-4">Edit Daily Goal</h3>
+              <p className="text-neutral-500 text-sm mb-4">How many habits do you want to complete each day?</p>
+              <input
+                type="number"
+                min="1"
+                max={habits.length}
+                value={goalInput}
+                onChange={(e) => setGoalInput(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-lg font-mono focus:outline-none focus:border-amber-500/50 mb-4"
+                autoFocus
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsEditingGoal(false)}
+                  className="flex-1 px-4 py-3 rounded-xl text-neutral-400 bg-white/5 hover:bg-white/10 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const newGoal = parseInt(goalInput, 10);
+                    if (newGoal > 0 && newGoal <= habits.length) {
+                      updateDailyGoal(newGoal);
+                      setIsEditingGoal(false);
+                    }
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl text-black bg-amber-500 hover:bg-amber-400 font-medium transition-all"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer Stats */}
         <div className="mt-8 glass-card rounded-3xl p-6">
