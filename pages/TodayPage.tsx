@@ -47,8 +47,7 @@ const HabitCard: React.FC<{
         animation: 'fadeSlideUp 0.5s ease-out forwards',
         opacity: 0,
         borderColor: isCompleted ? habit.color + '50' : undefined,
-        boxShadow: isCompleted ? `0 0 30px ${habit.color}20` : undefined,
-        ringColor: habit.color + '50',
+        boxShadow: isCompleted ? `0 0 30px ${habit.color}20, inset 0 0 0 2px ${habit.color}50` : undefined,
       }}
     >
       {/* Glow effect when completed */}
